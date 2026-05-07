@@ -189,6 +189,30 @@ const adxLine = adxChart.addSeries(
     { color: '#8b5cf6', lineWidth: 2 }
 );
 
+const upperBandLine = chart.addSeries(
+    LightweightCharts.LineSeries,
+    {
+        color: '#22c55e',
+        lineWidth: 2
+    }
+);
+
+const middleBandLine = chart.addSeries(
+    LightweightCharts.LineSeries,
+    {
+        color: '#f59e0b',
+        lineWidth: 2
+    }
+);
+
+const lowerBandLine = chart.addSeries(
+    LightweightCharts.LineSeries,
+    {
+        color: '#ef4444',
+        lineWidth: 2
+    }
+);
+
 let autoUpdateInterval;
 // Below is a simple function to determine RSI signal based on standard thresholds which is not commited to the backend yet but can be used for frontend display or future enhancements. It returns a label and color for the RSI signal.
 
@@ -218,6 +242,94 @@ function getADXSignal(adx) {
     if (adx > 25) return { label: "Buy", color: "#22c55e", angle: 126-90 };
     if (adx < 25) return { label: "Neutral", color: "#E6E9E8", angle: 90-90 };
     return { label: "No Trend", color: "#ef4444", angle: 45 };
+}
+// Below is a simple function to determine Bollinger Bands signal based on the position of the price relative to the upper, middle, and lower bands as well as the bandwidth. It returns a label, color, and angle for the Bollinger Bands signal which can be used for frontend display or future enhancements.
+function getBollingerSignal(
+    price,
+    upper,
+    middle,
+    lower
+) {
+
+    const bandWidth = upper - lower;
+
+    // Squeeze detection
+    const squeezeThreshold = middle * 0.03;
+
+    // =====================================================
+    // STRONG SELL
+    // =====================================================
+
+    if (price > upper) {
+
+        return {
+            label: "Strong Sell",
+            color: "#dc2626",
+            angle: -54
+        };
+    }
+
+    // =====================================================
+    // STRONG BUY
+    // =====================================================
+
+    if (price < lower) {
+
+        return {
+            label: "Strong Buy",
+            color: "#16a34a",
+            angle: 72
+        };
+    }
+
+    // =====================================================
+    // NEUTRAL / SQUEEZE
+    // =====================================================
+
+    if (bandWidth < squeezeThreshold) {
+
+        return {
+            label: "Neutral / Squeeze",
+            color: "#9ca3af",
+            angle: 0
+        };
+    }
+
+    // =====================================================
+    // SELL
+    // =====================================================
+
+    if (price > middle) {
+
+        return {
+            label: "Sell",
+            color: "#f97316",
+            angle: -36
+        };
+    }
+
+    // =====================================================
+    // BUY
+    // =====================================================
+
+    if (price < middle) {
+
+        return {
+            label: "Buy",
+            color: "#22c55e",
+            angle: 36
+        };
+    }
+
+    // =====================================================
+    // DEFAULT
+    // =====================================================
+
+    return {
+        label: "Neutral",
+        color: "#9ca3af",
+        angle: 0
+    };
 }
 
 function fetchData(ticker, timeframe, emaPeriod) {
@@ -405,6 +517,103 @@ function fetchData(ticker, timeframe, emaPeriod) {
                 document.getElementById('adxChart').style.display = 'none';
                 document.getElementById("adxSignalContainer").classList.add("hidden");
             }
+            // Below is a simple function to determine Bollinger Bands display logic. It checks if Bollinger Bands data is available and valid, then updates the upper, middle, and lower band lines accordingly. If data is missing or invalid, it clears the bands from the chart. (not commited)
+            if (data.bollinger && data.bollinger.length > 0) {
+
+                const upperData = data.bollinger
+                    .filter(d => d.upper !== null)
+                    .map(d => ({
+                        time: d.time,
+                        value: d.upper
+                    }));
+
+                const middleData = data.bollinger
+                    .filter(d => d.middle !== null)
+                    .map(d => ({
+                        time: d.time,
+                        value: d.middle
+                    }));
+
+                const lowerData = data.bollinger
+                    .filter(d => d.lower !== null)
+                    .map(d => ({
+                        time: d.time,
+                        value: d.lower
+                    }));
+
+                upperBandLine.setData(upperData);
+                middleBandLine.setData(middleData);
+                lowerBandLine.setData(lowerData);
+
+                // =====================================================
+                // BOLLINGER GAUGE SIGNAL
+                // =====================================================
+
+                const validBB = data.bollinger.filter(
+                    d =>
+                        d.upper !== null &&
+                        d.middle !== null &&
+                        d.lower !== null
+                );
+
+                if (validBB.length > 0) {
+
+                    const latestBB = validBB[validBB.length - 1];
+
+                    const latestPrice =
+                        data.candlestick[
+                            data.candlestick.length - 1
+                        ].close;
+
+                    // GET SIGNAL
+                    const signal = getBollingerSignal(
+                        latestPrice,
+                        latestBB.upper,
+                        latestBB.middle,
+                        latestBB.lower
+                    );
+
+                    // SHOW GAUGE
+                    document.getElementById(
+                        "bbSignalContainer"
+                    ).classList.remove("hidden");
+
+                    // UPDATE LABEL
+                    const text =
+                        document.getElementById(
+                            "bbSignalText"
+                        );
+
+                    text.innerText = signal.label;
+
+                    text.style.backgroundColor =
+                        signal.color;
+
+                    // ROTATE NEEDLE
+                    document.getElementById("bbNeedle")
+                        .setAttribute(
+                            "transform",
+                            `rotate(${signal.angle} 100 100)`
+                        );
+
+                } else {
+
+                    document.getElementById(
+                        "bbSignalContainer"
+                    ).classList.add("hidden");
+                }
+
+            } else {
+
+                upperBandLine.setData([]);
+                middleBandLine.setData([]);
+                lowerBandLine.setData([]);
+
+                // HIDE GAUGE
+                document.getElementById(
+                    "bbSignalContainer"
+                ).classList.add("hidden");
+            }
                     })
         .catch(error => {
             console.error('Error fetching data:', error);
@@ -431,6 +640,11 @@ window.addEventListener('load', () => {
     adxChart.resize(
     document.getElementById('adxChart').clientWidth,
     document.getElementById('adxChart').clientHeight
+    );
+
+    chart.resize(
+    document.getElementById('chart').clientWidth,
+    document.getElementById('chart').clientHeight
     );
 
     // 🔥 Fetch initial data

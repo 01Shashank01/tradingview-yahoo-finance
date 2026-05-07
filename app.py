@@ -6,6 +6,7 @@ import json
 import os
 from TickAnalyzer.ema_calculation import calculate_ema
 from TickAnalyzer.adx_calculation import calculate_adx
+from TickAnalyzer.bollinger_calculation import calculate_bollinger_bands
 from TickAnalyzer.macd_calculation import calculate_macd
 from TickAnalyzer.rsi_calculation import rsi_calculation
 from models import db, Symbol
@@ -103,6 +104,33 @@ def fetch_yahoo_data(ticker, interval, ema_period=20, indicators=None):
                 'adx': None if pd.isna(row['ADX']) else float(row['ADX']),
                 'plus_di': None if pd.isna(row['PLUS_DI']) else float(row['PLUS_DI']),
                 'minus_di': None if pd.isna(row['MINUS_DI']) else float(row['MINUS_DI'])
+            })
+    if 'bollinger' in indicators:
+
+        bb_df = calculate_bollinger_bands(data)
+
+        indicators_data['bollinger'] = []
+
+        for i in range(len(data)):
+
+            indicators_data['bollinger'].append({
+
+                'time': int(data.index[i].timestamp()),
+
+                'upper': (
+                    None if pd.isna(bb_df['BB_UPPER'].iloc[i])
+                    else round(float(bb_df['BB_UPPER'].iloc[i]), 2)
+                ),
+
+                'middle': (
+                    None if pd.isna(bb_df['BB_MIDDLE'].iloc[i])
+                    else round(float(bb_df['BB_MIDDLE'].iloc[i]), 2)
+                ),
+
+                'lower': (
+                    None if pd.isna(bb_df['BB_LOWER'].iloc[i])
+                    else round(float(bb_df['BB_LOWER'].iloc[i]), 2)
+                )
             })
 
     # ✅ Candlestick (always)
