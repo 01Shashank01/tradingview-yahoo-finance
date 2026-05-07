@@ -8,6 +8,7 @@ from TickAnalyzer.ema_calculation import calculate_ema
 from TickAnalyzer.adx_calculation import calculate_adx
 from TickAnalyzer.bollinger_calculation import calculate_bollinger_bands
 from TickAnalyzer.macd_calculation import calculate_macd
+from TickAnalyzer.stochastic_calculation import calculate_stochastic 
 from TickAnalyzer.rsi_calculation import rsi_calculation
 from models import db, Symbol
 
@@ -130,6 +131,42 @@ def fetch_yahoo_data(ticker, interval, ema_period=20, indicators=None):
                 'lower': (
                     None if pd.isna(bb_df['BB_LOWER'].iloc[i])
                     else round(float(bb_df['BB_LOWER'].iloc[i]), 2)
+                )
+            })
+    if 'stochastic' in indicators:
+
+        stoch_df = calculate_stochastic(data)
+
+        indicators_data['stochastic'] = []
+
+        for i in range(len(data)):
+
+            indicators_data['stochastic'].append({
+
+                'time': int(data.index[i].timestamp()),
+
+                'k': (
+                    None if pd.isna(
+                        stoch_df['STOCH_K'].iloc[i]
+                    )
+                    else round(
+                        float(
+                            stoch_df['STOCH_K'].iloc[i]
+                        ),
+                        2
+                    )
+                ),
+
+                'd': (
+                    None if pd.isna(
+                        stoch_df['STOCH_D'].iloc[i]
+                    )
+                    else round(
+                        float(
+                            stoch_df['STOCH_D'].iloc[i]
+                        ),
+                        2
+                    )
                 )
             })
 

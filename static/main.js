@@ -213,6 +213,27 @@ const lowerBandLine = chart.addSeries(
     }
 );
 
+const stochChart = LightweightCharts.createChart(
+    document.getElementById('stochChart'),
+    chartOptions2
+);
+
+const stochKLine = stochChart.addSeries(
+    LightweightCharts.LineSeries,
+    {
+        color: '#3b82f6',
+        lineWidth: 2
+    }
+);
+
+const stochDLine = stochChart.addSeries(
+    LightweightCharts.LineSeries,
+    {
+        color: '#f97316',
+        lineWidth: 2
+    }
+);
+
 let autoUpdateInterval;
 // Below is a simple function to determine RSI signal based on standard thresholds which is not commited to the backend yet but can be used for frontend display or future enhancements. It returns a label and color for the RSI signal.
 
@@ -328,6 +349,68 @@ function getBollingerSignal(
     return {
         label: "Neutral",
         color: "#9ca3af",
+        angle: 0
+    };
+}
+// Below is a simple function to determine Stochastic Oscillator signal based on the %K and %D values. It returns a label, color, and angle for the Stochastic signal which can be used for frontend display or future enhancements.
+function getStochasticSignal(
+    k,
+    d
+) {
+
+    // STRONG BUY
+    if (
+        k < 20 &&
+        k > d
+    ) {
+
+        return {
+            label: "Strong Buy",
+            color: "#16a34a",
+            angle: 72
+        };
+    }
+
+    // STRONG SELL
+    if (
+        k > 80 &&
+        k < d
+    ) {
+
+        return {
+            label: "Strong Sell",
+            color: "#dc2626",
+            angle: -72
+        };
+    }
+
+    // BUY
+    if (k > d) {
+
+        return {
+            label: "Buy",
+            color: "#22c55e",
+            angle: 36
+        };
+    }
+
+    // SELL
+    if (k < d) {
+
+        return {
+            label: "Sell",
+            color: "#f97316",
+            angle: -36
+        };
+    }
+
+    // NEUTRAL
+    return {
+
+        label: "Neutral",
+
+        color: "#9ca3af",
+
         angle: 0
     };
 }
@@ -614,6 +697,105 @@ function fetchData(ticker, timeframe, emaPeriod) {
                     "bbSignalContainer"
                 ).classList.add("hidden");
             }
+// Below is a simple function to determine Stochastic Oscillator display logic. It checks if Stochastic data is available and valid, then updates the %K and %D lines accordingly. If data is missing or invalid, it clears the lines from the chart and hides it. (not commited)
+            if (
+                    data.stochastic &&
+                    data.stochastic.length > 0
+                ) {
+
+                    const kData = data.stochastic
+                        .filter(d => d.k !== null)
+                        .map(d => ({
+                            time: d.time,
+                            value: d.k
+                        }));
+
+                    const dData = data.stochastic
+                        .filter(d => d.d !== null)
+                        .map(d => ({
+                            time: d.time,
+                            value: d.d
+                        }));
+
+                    stochKLine.setData(kData);
+
+                    stochDLine.setData(dData);
+
+                    document.getElementById(
+                        'stochChart'
+                    ).style.display = 'block';
+
+                    stochChart.timeScale().fitContent();
+
+                    // =====================================================
+                    // STOCHASTIC GAUGE SIGNAL
+                    // =====================================================
+
+                    const validStoch = data.stochastic.filter(
+                        d =>
+                            d.k !== null &&
+                            d.d !== null
+                    );
+
+                    if (validStoch.length > 0) {
+
+                        const latestStoch =
+                            validStoch[
+                                validStoch.length - 1
+                            ];
+
+                        // GET SIGNAL
+                        const signal = getStochasticSignal(
+                            latestStoch.k,
+                            latestStoch.d
+                        );
+
+                        // SHOW GAUGE
+                        document.getElementById(
+                            "stochSignalContainer"
+                        ).classList.remove("hidden");
+
+                        // UPDATE TEXT
+                        const text =
+                            document.getElementById(
+                                "stochSignalText"
+                            );
+
+                        text.innerText = signal.label;
+
+                        text.style.backgroundColor =
+                            signal.color;
+
+                        // ROTATE NEEDLE
+                        document.getElementById(
+                            "stochNeedle"
+                        ).setAttribute(
+                            "transform",
+                            `rotate(${signal.angle} 100 100)`
+                        );
+
+                    } else {
+
+                        document.getElementById(
+                            "stochSignalContainer"
+                        ).classList.add("hidden");
+                    }
+
+                } else {
+
+                    stochKLine.setData([]);
+
+                    stochDLine.setData([]);
+
+                    document.getElementById(
+                        'stochChart'
+                    ).style.display = 'none';
+
+                    // HIDE GAUGE
+                    document.getElementById(
+                        "stochSignalContainer"
+                    ).classList.add("hidden");
+                }
                     })
         .catch(error => {
             console.error('Error fetching data:', error);
@@ -645,6 +827,11 @@ window.addEventListener('load', () => {
     chart.resize(
     document.getElementById('chart').clientWidth,
     document.getElementById('chart').clientHeight
+    );
+
+    stochChart.resize(
+    document.getElementById('stochChart').clientWidth,
+    document.getElementById('stochChart').clientHeight
     );
 
     // 🔥 Fetch initial data
@@ -682,6 +869,9 @@ document.getElementById('autoUpdate').addEventListener('change', (event) => {
 window.addEventListener('resize', () => {
     chart.resize(document.getElementById('chart').clientWidth, document.getElementById('chart').clientHeight);
     rsiChart.resize(document.getElementById('rsiChart').clientWidth, document.getElementById('rsiChart').clientHeight);
+    ///macdChart.resize(document.getElementById('macdChart').clientWidth, document.getElementById('macdChart').clientHeight);
+    //adxChart.resize(document.getElementById('adxChart').clientWidth, document.getElementById('adxChart').clientHeight);
+    //stochChart.resize(document.getElementById('stochChart').clientWidth, document.getElementById('stochChart').clientHeight);
 });
 
 // Theme toggle functionality for DaisyUI
@@ -956,6 +1146,7 @@ function syncVisibleLogicalRange(chart1, chart2) {
 syncVisibleLogicalRange(chart, rsiChart);
 syncVisibleLogicalRange(chart, macdChart);
 syncVisibleLogicalRange(chart, adxChart);
+syncVisibleLogicalRange(chart, stochChart);
 
 // Sync crosshair position between charts
 function getCrosshairDataPoint(series, param) {

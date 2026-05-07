@@ -190,7 +190,12 @@
         #adxNeedle{
             transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
         }
+
         #bollingerNeedle {
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        
+        #stochNeedle {
             transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
@@ -276,6 +281,7 @@
                                     <option value="macd">MACD</option>
                                     <option value="adx">ADX</option>
                                     <option value="bollinger">Bollinger Bands</option>
+                                    <option value="stochastic">Stochastic Oscillator</option>
                                 </select>
                             </div>
                             
@@ -312,6 +318,8 @@
                 <div id="macdChart" class="chart-container card bg-base-100 shadow-md h-[20vh] p-1"></div>
                 <!-- This is the container for the ADX chart -->
                 <div id="adxChart" class="chart-container card bg-base-100 shadow-md h-[20vh] p-1"></div>
+                <!-- This is the container for the Stochastic Oscillator chart -->
+                <div id="stochChart"class="chart-container card bg-base-100 shadow-md h-[20vh] p-1"></div>
 
                 <!-- This is the container for the RSI signal display -->
                 
@@ -552,6 +560,105 @@
                     </div>
 
                 </div>
+                <!-- STOCHASTIC SIGNAL CONTAINER -->
+
+                <div id="stochSignalContainer"
+                    class="hidden card bg-base-100 shadow-md p-4 mt-2">
+
+                    <h3 class="text-center font-semibold mb-2">
+                        Stochastic Signal
+                    </h3>
+
+                    <div class="gauge-wrapper">
+
+                        <!-- Labels -->
+                        <div class="gauge-label left">
+                            Strong Sell
+                        </div>
+
+                        <div class="gauge-label left-mid">
+                            Sell
+                        </div>
+
+                        <div class="gauge-label top">
+                            Neutral
+                        </div>
+
+                        <div class="gauge-label right-mid">
+                            Buy
+                        </div>
+
+                        <div class="gauge-label right">
+                            Strong Buy
+                        </div>
+
+                        <!-- SVG Gauge -->
+                        <svg viewBox="0 0 200 100"
+                            class="gauge-svg">
+
+                            <!-- Strong Sell -->
+                            <path d="M10 100 A90 90 0 0 1 27.1884705062 47.0993272937"
+                                stroke="#dc2626"
+                                stroke-width="5"
+                                fill="none"/>
+
+                            <!-- Sell -->
+                            <path d="M27.1884705062 47.0993272937 A90 90 0 0 1 72.1884705063 14.4049135334"
+                                stroke="#f97316"
+                                stroke-width="5"
+                                fill="none"/>
+
+                            <!-- Neutral -->
+                            <path d="M72.1884705063 14.4049135334 A90 90 0 0 1 127.811529494 14.4049135334"
+                                stroke="#9ca3af"
+                                stroke-width="5"
+                                fill="none"/>
+
+                            <!-- Buy -->
+                            <path d="M127.811529494 14.4049135334 A90 90 0 0 1 172.811529494 47.0993272937"
+                                stroke="#22c55e"
+                                stroke-width="5"
+                                fill="none"/>
+
+                            <!-- Strong Buy -->
+                            <path d="M172.811529494 47.0993272937 A90 90 0 0 1 190 100"
+                                stroke="#16a34a"
+                                stroke-width="5"
+                                fill="none"/>
+
+                            <!-- NEEDLE -->
+                            <line id="stochNeedle"
+                                x1="100"
+                                y1="100"
+                                x2="100"
+                                y2="20"
+                                stroke="black"
+                                stroke-width="1.5"
+                                stroke-linecap="round"
+                                transform="rotate(90 100 100)"/>
+
+                            <!-- CENTER DOT -->
+                            <circle
+                                cx="100"
+                                cy="100"
+                                r="6"
+                                fill="black"/>
+
+                        </svg>
+
+                    </div>
+
+                    <!-- SIGNAL LABEL -->
+
+                    <div id="stochSignalText"
+                        class="text-center mt-3 px-4 py-1 rounded-full text-white inline-block mx-auto">
+
+                        Neutral
+
+                    </div>
+
+                </div>
+                
             </div>
         </div>
         
